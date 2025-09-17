@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(AppImage.iconGoogle),
+            Image.asset(AppImage.background),
             SizedBox(height: 20),
             Text("Welcome"),
           ],

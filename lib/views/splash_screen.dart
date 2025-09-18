@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:myptp/extension/navigation.dart';
 import 'package:myptp/preference/shared_preference.dart';
-import 'package:myptp/screens/login_screen.dart';
-import 'package:myptp/screens/navbar.dart';
 import 'package:myptp/utils/app_image.dart';
+import 'package:myptp/views/auth/login_screen.dart';
+import 'package:myptp/views/navbar.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

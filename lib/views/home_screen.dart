@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:myptp/views/izin_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
     const HomePage(),
-    const CoursesPage(),
+    const IzinPage(),
     const AttendancePage(),
     const ProfilePage(),
   ];
@@ -36,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _selectedIndex == 0
               ? 'Dashboard'
               : _selectedIndex == 1
-              ? 'Courses'
+              ? 'Izin'
               : _selectedIndex == 2
               ? 'Attendance'
               : 'Profile',
@@ -60,9 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.school_outlined),
-            activeIcon: Icon(Icons.school),
-            label: 'Courses',
+            icon: Icon(Icons.email_outlined),
+            activeIcon: Icon(Icons.email),
+            label: 'Izin',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.access_time_outlined),
@@ -849,16 +850,6 @@ class _HomePageState extends State<HomePage> {
 }
 
 // Placeholder pages (keep existing ones)
-class CoursesPage extends StatelessWidget {
-  const CoursesPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Courses Page', style: TextStyle(fontSize: 24)),
-    );
-  }
-}
 
 class AttendancePage extends StatelessWidget {
   const AttendancePage({super.key});

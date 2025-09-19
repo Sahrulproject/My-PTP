@@ -1,9 +1,11 @@
+// views/auth/dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:myptp/extension/navigation.dart';
+import 'package:myptp/models/riwayat_kehadiran_model.dart'; // Import class yang dipisahkan
 import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/views/auth/login_screen.dart';
 
@@ -853,20 +855,4 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-}
-
-class AttendanceRecord {
-  final DateTime date;
-  final String status;
-  String clockIn;
-  String clockOut;
-  String? note;
-
-  AttendanceRecord(
-    this.date,
-    this.status,
-    this.clockIn,
-    this.clockOut,
-    this.note,
-  );
 }

@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Background utama putih
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -72,8 +72,6 @@ class _LoginScreenState extends State<LoginScreen>
                     _buildHeader(),
                     const SizedBox(height: 40),
                     _buildLoginCard(),
-                    const SizedBox(height: 24),
-                    _buildRegisterPrompt(),
                   ],
                 ),
               ),
@@ -112,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: const Color(0xFF2D3748), // Card biru tua / hampir hitam
+        color: const Color(0xFF2D3748),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -149,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen>
           const SizedBox(height: 20),
           _buildDivider(),
           const SizedBox(height: 20),
-          _buildGoogleButton(),
+          _buildRegisterButton(), // Changed from Google button to Register button
         ],
       ),
     );
@@ -160,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen>
       controller: emailController,
       keyboardType: TextInputType.emailAddress,
       cursorColor: Colors.white,
-      style: TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white),
       decoration: _inputDecoration(
         label: "Email",
         hint: "Enter your email",
@@ -179,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen>
     return TextFormField(
       controller: passwordController,
       cursorColor: Colors.white,
-      style: TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white),
       obscureText: !isPasswordVisible,
       decoration: _inputDecoration(
         label: "Password",
@@ -262,12 +260,12 @@ class _LoginScreenState extends State<LoginScreen>
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  color: Colors.white,
+                  color: Colors.black,
                   strokeWidth: 2,
                 ),
               )
             : const Text(
-                "Sign In",
+                "Login",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
       ),
@@ -290,44 +288,25 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildGoogleButton() {
+  Widget _buildRegisterButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: OutlinedButton.icon(
-        onPressed: () {},
-        icon: Image.asset("assets/images/google.png", width: 20, height: 20),
-        label: const Text("Sign in with Google"),
+        onPressed: _handleRegister,
+        label: const Text(
+          "Register",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: const Color(0xFF2D3748),
-          side: const BorderSide(color: Color(0xFF667eea)),
+          side: const BorderSide(color: Color(0xFF2D3748), width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildRegisterPrompt() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          "Create new account? ",
-          style: TextStyle(color: Colors.grey[600], fontSize: 14),
-        ),
-        TextButton(
-          onPressed: () {
-            context.push(RegisterScreen());
-          },
-          child: const Text(
-            "Sign Up",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
     );
   }
 
@@ -337,16 +316,30 @@ class _LoginScreenState extends State<LoginScreen>
         isLoading = true;
       });
 
+      // Simulasi proses login
       await Future.delayed(const Duration(milliseconds: 1500));
+
+      // Cek apakah widget masih mounted sebelum setState
+      if (!mounted) return;
 
       setState(() {
         isLoading = false;
       });
 
+      // Cek lagi sebelum navigasi
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const Dashboard()),
       );
+    }
+  }
+
+  void _handleRegister() {
+    // Navigate to RegisterScreen
+    if (mounted) {
+      context.push(const RegisterScreen());
     }
   }
 }

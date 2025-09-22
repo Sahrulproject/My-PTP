@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide DateUtils;
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
+import 'package:myptp/utils/date_utils.dart'; // Import DateUtils
 import 'package:myptp/views/izin_page.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Attendance',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
+            icon: Icon(Icons.person_outlined),
             activeIcon: Icon(Icons.person),
             label: 'Profile',
           ),
@@ -258,15 +258,15 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://your-api-url.com/api/absen-check-in'),
+        Uri.parse('https://appabsensi.mobileprojp.com/api/absen/check-in'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization':
               'Bearer YOUR_TOKEN_HERE', // Replace with actual token
         },
         body: json.encode({
-          'attendance_date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-          'check_in_time': DateFormat('HH:mm:ss').format(DateTime.now()),
+          'attendance_date': DateUtils.formatDate(DateTime.now()),
+          'check_in_time': DateUtils.formatTime(DateTime.now()),
           'latitude': position.latitude,
           'longitude': position.longitude,
           'location_accuracy': position.accuracy,
@@ -304,15 +304,15 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://your-api-url.com/api/absen-check-out'),
+        Uri.parse('https://appabsensi.mobileprojp.com/api/absen/check-out'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization':
               'Bearer YOUR_TOKEN_HERE', // Replace with actual token
         },
         body: json.encode({
-          'attendance_date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-          'check_out_time': DateFormat('HH:mm:ss').format(DateTime.now()),
+          'attendance_date': DateUtils.formatDate(DateTime.now()),
+          'check_out_time': DateUtils.formatTime(DateTime.now()),
           'latitude': position.latitude,
           'longitude': position.longitude,
           'location_accuracy': position.accuracy,
@@ -337,10 +337,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _getTodayAttendance() async {
     try {
-      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final today = DateUtils.formatDate(DateTime.now());
       final response = await http.get(
         Uri.parse(
-          'https://your-api-url.com/api/absen/today?attendance_date=$today',
+          'https://appabsensi.mobileprojp.com/api/absen/today?attendance_date=$today',
         ),
         headers: {
           'Authorization':
@@ -361,7 +361,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _getAttendanceStats() async {
     try {
       final response = await http.get(
-        Uri.parse('https://your-api-url.com/api/absen/stats'),
+        Uri.parse('https://appabsensi.mobileprojp.com/api/absen/stats'),
         headers: {
           'Authorization':
               'Bearer YOUR_TOKEN_HERE', // Replace with actual token
@@ -391,10 +391,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
-    final formattedDate = DateFormat(
-      'EEEE, d MMMM yyyy',
-      'id_ID',
-    ).format(today);
+    final formattedDate = DateUtils.formatReadableDate(today);
 
     return RefreshIndicator(
       onRefresh: _loadDashboardData,
@@ -465,7 +462,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Employee ID: EMP001',
+                      'Trainings: Mobile Programming B3',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 14,
@@ -849,8 +846,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Placeholder pages (keep existing ones)
-
+// Placeholder pages
 class AttendancePage extends StatelessWidget {
   const AttendancePage({super.key});
 

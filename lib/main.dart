@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:myptp/views/auth/dashboard.dart';
 import 'package:myptp/views/auth/login_screen.dart';
+import 'package:myptp/views/dashboard.dart';
 import 'package:myptp/views/splash_screen.dart';
 
 void main() {
@@ -34,11 +34,10 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
       ),
-      home: SplashScreen(),
+      initialRoute: SplashScreen.id,
       routes: {
-        // Home.id: (context) => Home(),
-        // ButtomNav.id: (context) => ButtomNav(),
-        LoginScreen.id: (context) => LoginScreen(),
+        "/login": (context) => LoginScreen(),
+        SplashScreen.id: (context) => SplashScreen(),
         Dashboard.id: (context) => Dashboard(),
         // home: LoginScreen(),
       },

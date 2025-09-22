@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:myptp/api/register_api.dart';
 import 'package:myptp/extension/navigation.dart';
-import 'package:myptp/views/auth/dashboard.dart';
+import 'package:myptp/models/login_model.dart';
+import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/views/auth/register_screen.dart';
+import 'package:myptp/views/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -147,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen>
           const SizedBox(height: 20),
           _buildDivider(),
           const SizedBox(height: 20),
-          _buildRegisterButton(), // Changed from Google button to Register button
+          _buildRegisterButton(),
         ],
       ),
     );
@@ -167,6 +170,9 @@ class _LoginScreenState extends State<LoginScreen>
       validator: (value) {
         if (value?.isEmpty ?? true) {
           return 'Please enter your email';
+        }
+        if (!value!.contains('@')) {
+          return 'Please enter a valid email';
         }
         return null;
       },
@@ -198,6 +204,9 @@ class _LoginScreenState extends State<LoginScreen>
       validator: (value) {
         if (value?.isEmpty ?? true) {
           return 'Please enter your password';
+        }
+        if (value!.length < 6) {
+          return 'Password must be at least 6 characters';
         }
         return null;
       },
@@ -316,28 +325,46 @@ class _LoginScreenState extends State<LoginScreen>
         isLoading = true;
       });
 
-      // Simulasi proses login
-      await Future.delayed(const Duration(milliseconds: 1500));
+      try {
+        final email = emailController.text.trim();
+        final password = passwordController.text.trim();
 
-      // Cek apakah widget masih mounted sebelum setState
-      if (!mounted) return;
+        final LoginModel result = await AuthenticationAPI.loginUser(
+          email: email,
+          password: password,
+        );
 
-      setState(() {
-        isLoading = false;
-      });
+        // Simpan status login
+        await PreferenceHandler.saveLogin();
 
-      // Cek lagi sebelum navigasi
-      if (!mounted) return;
+        if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Dashboard()),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? "Login berhasil")),
+        );
+
+        // Navigasi ke dashboard
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } catch (e) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Login gagal: ${e.toString()}")));
+      } finally {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
     }
   }
 
   void _handleRegister() {
-    // Navigate to RegisterScreen
     if (mounted) {
       context.push(const RegisterScreen());
     }

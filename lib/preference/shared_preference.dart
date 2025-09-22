@@ -16,14 +16,11 @@ class PreferenceHandler {
 
   static Future<bool?> getLogin() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.getBool(loginKey);
     return prefs.getBool(loginKey);
   }
 
-  static getToken() async {
-    print(tokenKey);
+  static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.getString(tokenKey);
     return prefs.getString(tokenKey);
   }
 

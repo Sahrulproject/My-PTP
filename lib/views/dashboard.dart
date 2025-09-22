@@ -1,17 +1,15 @@
-// views/auth/dashboard.dart
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide DateUtils;
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:intl/intl.dart';
-import 'package:myptp/extension/navigation.dart';
-import 'package:myptp/models/riwayat_kehadiran_model.dart'; // Import class yang dipisahkan
+import 'package:myptp/models/riwayat_kehadiran_model.dart';
 import 'package:myptp/preference/shared_preference.dart';
+import 'package:myptp/utils/date_utils.dart'; // Import DateUtils
 import 'package:myptp/views/auth/login_screen.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
-  static String id = "dashboard";
+  static String id = "/dashboard";
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -68,7 +66,10 @@ class _DashboardState extends State<Dashboard> {
   };
 
   GoogleMapController? mapController;
-  LatLng _currentPosition = LatLng(-6.200000, 106.816666); // Default to Jakarta
+  LatLng _currentPosition = const LatLng(
+    -6.200000,
+    106.816666,
+  ); // Default to Jakarta
   double lat = -6.200000;
   double long = 106.816666;
   String _currentAddress = "Alamat tidak ditemukan";
@@ -94,37 +95,43 @@ class _DashboardState extends State<Dashboard> {
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
-    _currentPosition = LatLng(position.latitude, position.longitude);
-    lat = position.latitude;
-    long = position.longitude;
-
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      _currentPosition.latitude,
-      _currentPosition.longitude,
-    );
-    Placemark place = placemarks[0];
-
     setState(() {
-      _marker = Marker(
-        markerId: MarkerId("lokasi_saya"),
-        position: _currentPosition,
-        infoWindow: InfoWindow(
-          title: 'Lokasi Anda',
-          snippet: "${place.street}, ${place.locality}",
-        ),
+      _currentPosition = LatLng(position.latitude, position.longitude);
+      lat = position.latitude;
+      long = position.longitude;
+    });
+
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        _currentPosition.latitude,
+        _currentPosition.longitude,
       );
 
-      _currentAddress =
-          "${place.name}, ${place.street}, ${place.locality}, ${place.country}";
-      print(_currentAddress);
-      print(_currentPosition);
-      print("${place.street}, ${place.locality}");
-      mapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: _currentPosition, zoom: 16),
-        ),
-      );
-    });
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        setState(() {
+          _marker = Marker(
+            markerId: const MarkerId("lokasi_saya"),
+            position: _currentPosition,
+            infoWindow: InfoWindow(
+              title: 'Lokasi Anda',
+              snippet: "${place.street}, ${place.locality}",
+            ),
+          );
+
+          _currentAddress =
+              "${place.name}, ${place.street}, ${place.locality}, ${place.country}";
+        });
+
+        mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: _currentPosition, zoom: 16),
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error getting address: $e");
+    }
   }
 
   @override
@@ -171,7 +178,7 @@ class _DashboardState extends State<Dashboard> {
     await Future.delayed(const Duration(seconds: 2));
 
     final now = DateTime.now();
-    final formattedTime = DateFormat('HH:mm').format(now);
+    final formattedTime = DateUtils.formatTime(now);
 
     // Tambahkan record baru
     final newRecord = AttendanceRecord(
@@ -215,7 +222,7 @@ class _DashboardState extends State<Dashboard> {
     await Future.delayed(const Duration(seconds: 2));
 
     final now = DateTime.now();
-    final formattedTime = DateFormat('HH:mm').format(now);
+    final formattedTime = DateUtils.formatTime(now);
 
     // Update record dengan check-out
     setState(() {
@@ -234,10 +241,7 @@ class _DashboardState extends State<Dashboard> {
     await PreferenceHandler.removeToken();
     await PreferenceHandler.removeLogin();
 
-    Navigator.pushReplacementNamed(context, '/login_screen');
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Berhasil logout')));
+    Navigator.pushReplacementNamed(context, LoginScreen.id);
   }
 
   void _showLogoutDialog() {
@@ -254,10 +258,7 @@ class _DashboardState extends State<Dashboard> {
             ),
             TextButton(
               onPressed: () async {
-                context.pushNamedAndRemoveUntil(
-                  LoginScreen.id,
-                  (route) => false,
-                );
+                Navigator.pop(context);
                 await _logout();
               },
               child: const Text("Logout", style: TextStyle(color: Colors.red)),
@@ -421,8 +422,6 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _getCurrentPage() {
-    final theme = Theme.of(context);
-
     switch (_currentIndex) {
       case 0:
         return _buildAttendancePage();
@@ -431,7 +430,7 @@ class _DashboardState extends State<Dashboard> {
       case 2:
         return _buildHistoryPage();
       case 3:
-        return _buildSettingsPage(theme);
+        return _buildSettingsPage();
       default:
         return _buildAttendancePage();
     }
@@ -456,14 +455,14 @@ class _DashboardState extends State<Dashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                DateFormat('EEEE, d MMMM y').format(DateTime.now()),
+                DateUtils.formatReadableDate(DateTime.now()),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
-                DateFormat('HH:mm').format(DateTime.now()),
+                DateUtils.formatTime(DateTime.now()),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -473,6 +472,7 @@ class _DashboardState extends State<Dashboard> {
           ),
         ),
 
+        // Google Maps
         SizedBox(
           height: 300,
           child: GoogleMap(
@@ -480,18 +480,40 @@ class _DashboardState extends State<Dashboard> {
               target: _currentPosition,
               zoom: 16,
             ),
+            markers: _marker != null ? {_marker!} : {},
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
             mapType: MapType.normal,
+            onMapCreated: (GoogleMapController controller) {
+              mapController = controller;
+            },
           ),
         ),
-        Text(_currentPosition.toString()),
-        Text(_currentAddress.toString()),
+
+        // Location info
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Koordinat: ${_currentPosition.latitude.toStringAsFixed(6)}, ${_currentPosition.longitude.toStringAsFixed(6)}',
+                style: const TextStyle(fontSize: 12),
+              ),
+              Text(
+                'Alamat: $_currentAddress',
+                style: const TextStyle(fontSize: 12),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+
+        // Refresh location button
         ElevatedButton(
-          onPressed: () {
-            _getCurrentLocation();
-          },
-          child: Text("Get Current Location"),
+          onPressed: _getCurrentLocation,
+          child: const Text("Refresh Lokasi"),
         ),
 
         // Tombol Check-in/Check-out
@@ -703,7 +725,7 @@ class _DashboardState extends State<Dashboard> {
   }
 
   // === Page: Pengaturan ===
-  Widget _buildSettingsPage(ThemeData theme) {
+  Widget _buildSettingsPage() {
     bool notificationsEnabled = true;
     bool darkMode = false;
 
@@ -765,45 +787,12 @@ class _DashboardState extends State<Dashboard> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              trailing: Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-              ),
+              trailing: const Icon(Icons.chevron_right),
               onTap: _showLogoutDialog,
             ),
           ],
         );
       },
-    );
-  }
-
-  Widget _buildStatisticCard(String title, Color color, int count) {
-    return Card(
-      color: color.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              count.toString(),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

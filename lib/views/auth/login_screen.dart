@@ -4,11 +4,12 @@ import 'package:myptp/extension/navigation.dart';
 import 'package:myptp/models/login_model.dart';
 import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/views/auth/register_screen.dart';
+import 'package:myptp/views/forgot_password_screen.dart';
 import 'package:myptp/views/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-  static const id = "/login";
+  static const id = "/login_screen";
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -75,6 +76,8 @@ class _LoginScreenState extends State<LoginScreen>
                     _buildHeader(),
                     const SizedBox(height: 40),
                     _buildLoginCard(),
+                    const SizedBox(height: 30),
+                    _buildCopyright(),
                   ],
                 ),
               ),
@@ -89,12 +92,19 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       children: [
         const SizedBox(height: 20),
-        Image.asset("assets/images/newvector_bg.png", width: 120, height: 120),
+        SizedBox(
+          height: 140,
+          child: Image.asset(
+            "assets/images/newvector_bg.png",
+            color: const Color(0xFF2D3748),
+            fit: BoxFit.contain,
+          ),
+        ),
         const SizedBox(height: 8),
         const Text(
-          "AttendEase",
+          "Login",
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF2D3748),
           ),
@@ -241,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen>
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: () {
-          // TODO: Forgot password
+          context.pushNamed(ForgotPasswordScreen.id);
         },
         child: const Text(
           "Forgot Password?",
@@ -316,6 +326,18 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCopyright() {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        Text(
+          "© 2025 My PTP. All rights reserved.",
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
+      ],
     );
   }
 

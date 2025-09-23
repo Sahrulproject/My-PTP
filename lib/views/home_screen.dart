@@ -1,870 +1,499 @@
-import 'dart:convert';
-
-import 'package:flutter/material.dart' hide DateUtils;
+import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
-import 'package:myptp/utils/date_utils.dart'; // Import DateUtils
-import 'package:myptp/views/izin_page.dart';
+import 'package:intl/intl.dart';
+import 'package:myptp/api/attendance_api.dart';
+import 'package:myptp/api/history_api.dart';
+import 'package:myptp/api/profile_api.dart';
+import 'package:myptp/api/statistik_api.dart';
+import 'package:myptp/models/absen_stats_model.dart'; // Import model stats
+import 'package:myptp/models/absen_today.dart';
+import 'package:myptp/models/get_profile_model.dart';
+import 'package:myptp/models/history_absen_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-  static const id = '/home';
+  static const id = "/home_screen";
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-  final List<Widget> _pages = [
-    const HomePage(),
-    const IzinPage(),
-    const AttendancePage(),
-    const ProfilePage(),
-  ];
+  late Future<GetProfileModel> _profileFuture;
+  late Future<AbsenTodayModel?> _todayFuture;
+  late Future<HistoryModel> _historyFuture;
+  late Future<AbsenStatsModel> _statsFuture;
+  String? _currentAddress;
+  bool _loadingLocation = true;
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = ProfileAPI.getProfile();
+    _todayFuture = AttendanceAPI.getToday();
+    _historyFuture = HistoryAPI.getHistory();
+    _statsFuture = StatistikAPI.getStats();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _currentAddress = "Izin lokasi tidak diberikan";
+          _loadingLocation = false;
+        });
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      await _getAddressFromLatLng(pos.latitude, pos.longitude);
+    } catch (e) {
+      setState(() {
+        _currentAddress = "Gagal mendapatkan lokasi";
+        _loadingLocation = false;
+      });
+    }
+  }
+
+  Future<void> _getAddressFromLatLng(double latitude, double longitude) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
+      Placemark place = placemarks[0];
+
+      String address =
+          '${place.street}, ${place.subLocality}, ${place.locality}';
+
+      setState(() {
+        _currentAddress = address;
+        _loadingLocation = false;
+      });
+    } catch (e) {
+      setState(() {
+        _currentAddress = "Alamat tidak dapat ditemukan";
+        _loadingLocation = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _selectedIndex == 0
-              ? 'Dashboard'
-              : _selectedIndex == 1
-              ? 'Izin'
-              : _selectedIndex == 2
-              ? 'Attendance'
-              : 'Profile',
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            _profileFuture = ProfileAPI.getProfile();
+            _todayFuture = AttendanceAPI.getToday();
+            _historyFuture = HistoryAPI.getHistory();
+            _statsFuture = StatistikAPI.getStats();
+            _loadingLocation = true;
+            _getCurrentLocation();
+          });
+        },
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              SizedBox(height: 20),
+              _buildProfileCard(),
+              SizedBox(height: 8),
+              _buildStatsCard(),
+              SizedBox(height: 20),
+              _buildTodayCard(),
+              SizedBox(height: 20),
+              _buildHistoryList(),
+            ],
+          ),
         ),
-        backgroundColor: const Color(0xFF667eea),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.email_outlined),
-            activeIcon: Icon(Icons.email),
-            label: 'Izin',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.access_time_outlined),
-            activeIcon: Icon(Icons.access_time),
-            label: 'Attendance',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outlined),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF667eea),
-        unselectedItemColor: Colors.grey[400],
-        type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
-      ),
-      drawer: _buildDrawer(),
     );
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildProfileCard() {
+    return Padding(
+      padding: EdgeInsets.all(21),
+      child: FutureBuilder<GetProfileModel>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return CircularProgressIndicator();
+          final profile = snapshot.data!.data!;
+          return Container(
+            height: 80,
+            width: double.infinity,
+            decoration: _boxWhite(),
+            child: Row(
               children: [
                 CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 40, color: Color(0xFF667eea)),
+                  radius: 38,
+                  backgroundImage: profile.profilePhotoUrl != null
+                      ? NetworkImage(profile.profilePhotoUrl!)
+                      : AssetImage("assets/images/foto ppkd.jpeg")
+                            as ImageProvider,
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Muhammad Sahrul Hakim',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Text(
+                      //   "Selamat ${_getGreeting()}",
+                      //   style: TextStyle(
+                      //     fontSize: 12,
+                      //     fontFamily: "StageGrotesk_Regular",
+                      //   ),
+                      // ),
+                      Text(
+                        profile.name ?? "-",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: "StageGrotesk_Bold",
+                        ),
+                      ),
+                      Text(
+                        profile.training?.title ?? "No Training",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: "StageGrotesk_Regular",
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                    ],
                   ),
-                ),
-                Text(
-                  'Employee ID: EMP001',
-                  style: TextStyle(color: Colors.white.withOpacity(0.9)),
                 ),
               ],
             ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text('Dashboard'),
-            onTap: () {
-              _onItemTapped(0);
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.access_time),
-            title: const Text('Attendance History'),
-            onTap: () {
-              _onItemTapped(2);
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            onTap: () {
-              _onItemTapped(3);
-              Navigator.pop(context);
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.help_outline),
-            title: const Text('Help & Support'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () {},
-          ),
-        ],
+          );
+        },
       ),
     );
   }
-}
 
-// Home Page Content - Dashboard Absensi
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  Position? _currentPosition;
-  bool _isLoadingLocation = false;
-  bool _isCheckingIn = false;
-  bool _isCheckingOut = false;
-
-  Map<String, dynamic>? _todayAttendance;
-  Map<String, dynamic>? _attendanceStats;
-  bool _isLoadingData = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDashboardData();
-  }
-
-  Future<void> _loadDashboardData() async {
-    await Future.wait([_getTodayAttendance(), _getAttendanceStats()]);
-    setState(() {
-      _isLoadingData = false;
-    });
-  }
-
-  Future<Position?> _getCurrentLocation() async {
-    setState(() {
-      _isLoadingLocation = true;
-    });
-
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showSnackBar('Location services are disabled. Please enable them.');
-        return null;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showSnackBar('Location permissions are denied');
-          return null;
+  Widget _buildStatsCard() {
+    return FutureBuilder<AbsenStatsModel>(
+      future: _statsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
         }
-      }
 
-      if (permission == LocationPermission.deniedForever) {
-        _showSnackBar('Location permissions are permanently denied');
-        return null;
-      }
+        if (!snapshot.hasData || snapshot.data?.data == null) {
+          return Container(
+            width: 350,
+            padding: EdgeInsets.all(16),
+            decoration: _boxWhite(),
+            child: Text(
+              "Tidak ada data statistik",
+              style: TextStyle(fontFamily: "StageGrotesk_Regular"),
+            ),
+          );
+        }
 
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+        final stats = snapshot.data!.data!;
+        final totalAbsen = stats.totalAbsen ?? 0;
+        final totalMasuk = stats.totalMasuk ?? 0;
+        final totalIzin = stats.totalIzin ?? 0;
 
-      setState(() {
-        _currentPosition = position;
-      });
-
-      return position;
-    } catch (e) {
-      _showSnackBar('Error getting location: $e');
-      return null;
-    } finally {
-      setState(() {
-        _isLoadingLocation = false;
-      });
-    }
-  }
-
-  Future<void> _checkIn() async {
-    setState(() {
-      _isCheckingIn = true;
-    });
-
-    Position? position = await _getCurrentLocation();
-    if (position == null) {
-      setState(() {
-        _isCheckingIn = false;
-      });
-      return;
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://appabsensi.mobileprojp.com/api/absen/check-in'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization':
-              'Bearer YOUR_TOKEN_HERE', // Replace with actual token
-        },
-        body: json.encode({
-          'attendance_date': DateUtils.formatDate(DateTime.now()),
-          'check_in_time': DateUtils.formatTime(DateTime.now()),
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'location_accuracy': position.accuracy,
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        _showSnackBar('Check-in successful!', isSuccess: true);
-        await _getTodayAttendance(); // Refresh today's data
-        await _getAttendanceStats(); // Refresh stats
-      } else {
-        _showSnackBar('Check-in failed. Please try again.');
-      }
-    } catch (e) {
-      _showSnackBar('Error during check-in: $e');
-    } finally {
-      setState(() {
-        _isCheckingIn = false;
-      });
-    }
-  }
-
-  Future<void> _checkOut() async {
-    setState(() {
-      _isCheckingOut = true;
-    });
-
-    Position? position = await _getCurrentLocation();
-    if (position == null) {
-      setState(() {
-        _isCheckingOut = false;
-      });
-      return;
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://appabsensi.mobileprojp.com/api/absen/check-out'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization':
-              'Bearer YOUR_TOKEN_HERE', // Replace with actual token
-        },
-        body: json.encode({
-          'attendance_date': DateUtils.formatDate(DateTime.now()),
-          'check_out_time': DateUtils.formatTime(DateTime.now()),
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'location_accuracy': position.accuracy,
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        _showSnackBar('Check-out successful!', isSuccess: true);
-        await _getTodayAttendance(); // Refresh today's data
-        await _getAttendanceStats(); // Refresh stats
-      } else {
-        _showSnackBar('Check-out failed. Please try again.');
-      }
-    } catch (e) {
-      _showSnackBar('Error during check-out: $e');
-    } finally {
-      setState(() {
-        _isCheckingOut = false;
-      });
-    }
-  }
-
-  Future<void> _getTodayAttendance() async {
-    try {
-      final today = DateUtils.formatDate(DateTime.now());
-      final response = await http.get(
-        Uri.parse(
-          'https://appabsensi.mobileprojp.com/api/absen/today?attendance_date=$today',
-        ),
-        headers: {
-          'Authorization':
-              'Bearer YOUR_TOKEN_HERE', // Replace with actual token
-        },
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _todayAttendance = json.decode(response.body);
-        });
-      }
-    } catch (e) {
-      print('Error fetching today attendance: $e');
-    }
-  }
-
-  Future<void> _getAttendanceStats() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://appabsensi.mobileprojp.com/api/absen/stats'),
-        headers: {
-          'Authorization':
-              'Bearer YOUR_TOKEN_HERE', // Replace with actual token
-        },
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _attendanceStats = json.decode(response.body);
-        });
-      }
-    } catch (e) {
-      print('Error fetching attendance stats: $e');
-    }
-  }
-
-  void _showSnackBar(String message, {bool isSuccess = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isSuccess ? Colors.green : Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final formattedDate = DateUtils.formatReadableDate(today);
-
-    return RefreshIndicator(
-      onRefresh: _loadDashboardData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Section
-            _buildHeaderSection(formattedDate),
-            const SizedBox(height: 24),
-
-            // Today's Status Card
-            _buildTodayStatusCard(),
-            const SizedBox(height: 20),
-
-            // Check-in/Check-out Buttons
-            _buildAttendanceButtons(),
-            const SizedBox(height: 24),
-
-            // Statistics Section
-            _buildStatisticsSection(),
-            const SizedBox(height: 20),
-
-            // Location Info
-            _buildLocationInfo(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderSection(String formattedDate) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        return Container(
+          width: 350,
+          padding: EdgeInsets.all(16),
+          decoration: _boxWhite(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                child: Icon(Icons.person, color: Colors.white, size: 30),
+              Text(
+                "Statistik Absen",
+                style: TextStyle(fontSize: 16, fontFamily: "StageGrotesk_Bold"),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Muhammad Sahrul Hakim',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Trainings: Mobile Programming B3',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _statItem("Total", totalAbsen, Colors.blue),
+                  _statItem("Masuk", totalMasuk, Color(0xFF10B981)),
+                  _statItem("Izin", totalIzin, Colors.orange),
+                ],
+              ),
+              SizedBox(height: 10),
+              if (totalAbsen > 0) ...[
+                LinearProgressIndicator(
+                  value: totalMasuk / totalAbsen,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  "Kehadiran: $totalMasuk/$totalAbsen "
+                  "(${(totalMasuk / totalAbsen * 100).toStringAsFixed(1)}%)",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: "StageGrotesk_Regular",
+                  ),
+                ),
+              ],
+              SizedBox(height: 5),
+              Text(
+                "Status Hari Ini: ${stats.sudahAbsenHariIni == true ? 'Sudah Absen' : 'Belum Absen'}",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: stats.sudahAbsenHariIni == true
+                      ? Color(0xFF10B981)
+                      : Colors.orange,
+                  fontFamily: "StageGrotesk_Bold",
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            formattedDate,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildTodayStatusCard() {
-    if (_isLoadingData) {
-      return _buildLoadingCard();
-    }
-
-    final checkIn = _todayAttendance?['check_in_time'];
-    final checkOut = _todayAttendance?['check_out_time'];
-    final status = _todayAttendance?['status'] ?? 'Not Checked In';
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.today, color: Color(0xFF667eea), size: 24),
-                const SizedBox(width: 8),
-                const Text(
-                  'Today\'s Attendance',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTimeCard(
-                    'Check In',
-                    checkIn ?? '--:--',
-                    Icons.login,
-                    Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildTimeCard(
-                    'Check Out',
-                    checkOut ?? '--:--',
-                    Icons.logout,
-                    Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _getStatusColor(status).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Status: $status',
-                style: TextStyle(
-                  color: _getStatusColor(status),
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeCard(String title, String time, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 4),
-          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          const SizedBox(height: 4),
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttendanceButtons() {
-    return Row(
+  Widget _statItem(String title, int count, Color color) {
+    return Column(
       children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _isCheckingIn ? null : _checkIn,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              count.toString(),
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: "StageGrotesk_Regular",
+                color: color,
               ),
-            ),
-            icon: _isCheckingIn
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.login),
-            label: Text(
-              _isCheckingIn ? 'Processing...' : 'Check In',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _isCheckingOut ? null : _checkOut,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: _isCheckingOut
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.logout),
-            label: Text(
-              _isCheckingOut ? 'Processing...' : 'Check Out',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
+        SizedBox(height: 5),
+        Text(title, style: TextStyle(fontSize: 14)),
       ],
     );
   }
 
-  Widget _buildStatisticsSection() {
-    if (_isLoadingData) {
-      return _buildLoadingCard();
-    }
-
-    final totalPresent = _attendanceStats?['total_present'] ?? 0;
-    final totalLate = _attendanceStats?['total_late'] ?? 0;
-    final totalAbsent = _attendanceStats?['total_absent'] ?? 0;
-    final attendanceRate = _attendanceStats?['attendance_rate'] ?? 0.0;
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildTodayCard() {
+    return FutureBuilder<AbsenTodayModel?>(
+      future: _todayFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
+        }
+        if (!snapshot.hasData || snapshot.data?.data == null) {
+          return Container(
+            width: 350,
+            padding: EdgeInsets.all(16),
+            decoration: _boxWhite(),
+            child: Text(
+              "Belum ada data absen hari ini",
+              style: TextStyle(fontFamily: "StageGrotesk_Medium"),
+            ),
+          );
+        }
+        final today = snapshot.data!.data!;
+        return Column(
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.bar_chart, color: Color(0xFF667eea), size: 24),
-                const SizedBox(width: 8),
-                const Text(
-                  'Attendance Statistics',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                _timeBox("Check In", today.checkInTime ?? "-"),
+                SizedBox(width: 10),
+                _timeBox("Check Out", today.checkOutTime ?? "-"),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'Present',
-                    totalPresent.toString(),
-                    Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatCard(
-                    'Late',
-                    totalLate.toString(),
-                    Colors.orange,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatCard(
-                    'Absent',
-                    totalAbsent.toString(),
-                    Colors.red,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+            SizedBox(height: 10),
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF667eea).withOpacity(0.1),
-                    Color(0xFF764ba2).withOpacity(0.1),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
+              width: 350,
+              padding: EdgeInsets.all(16),
+              decoration: _boxBlue(),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Attendance Rate',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${(attendanceRate * 100).toStringAsFixed(1)}%',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF667eea),
-                    ),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _currentAddress ?? "Lokasi tidak tersedia",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontFamily: "StageGrotesk_Regular",
+                          ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildStatCard(String title, String value, Color color) {
+  Widget _buildHistoryList() {
+    return FutureBuilder<HistoryModel>(
+      future: _historyFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.data == null) {
+          return Container(
+            padding: EdgeInsets.all(16),
+            child: Text("Tidak ada riwayat absen"),
+          );
+        }
+        final items = snapshot.data!.data!;
+        return Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Riwayat Absen",
+                style: TextStyle(fontSize: 18, fontFamily: "StageGrotesk_Bold"),
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                itemBuilder: (context, i) {
+                  final h = items[i];
+                  return Card(
+                    color: Colors.white,
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      leading: Icon(Icons.calendar_today_rounded, size: 20),
+                      title: Text(
+                        DateFormat(
+                          'dd MMM yyyy',
+                        ).format(h.attendanceDate ?? DateTime.now()),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: "StageGrotesk_Medium",
+                        ),
+                      ),
+                      subtitle: Text(
+                        "In: ${h.checkInTime ?? '-'} | Out: ${h.checkOutTime ?? '-'}",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: "StageGrotesk_Medium",
+                        ),
+                      ),
+                      trailing: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(h.status),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          h.status ?? "-",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontFamily: "StageGrotesk_Regular",
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'masuk':
+        return Color(0xFF10B981);
+      case 'telat':
+        return Colors.red;
+      case 'izin':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _timeBox(String title, String time) {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      height: 80,
+      width: 160,
+      padding: EdgeInsets.all(8),
+      decoration: _boxBlue(),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            value,
+            title,
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
+              color: Colors.white,
+              fontSize: 14,
+              fontFamily: "StageGrotesk_Medium",
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 5),
           Text(
-            title,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            textAlign: TextAlign.center,
+            time,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontFamily: "StageGrotesk_Bold",
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLocationInfo() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Color(0xFF667eea), size: 24),
-                const SizedBox(width: 8),
-                const Text(
-                  'Location Info',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_currentPosition != null) ...[
-              Text(
-                'Latitude: ${_currentPosition!.latitude.toStringAsFixed(6)}',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Longitude: ${_currentPosition!.longitude.toStringAsFixed(6)}',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Accuracy: ${_currentPosition!.accuracy.toStringAsFixed(1)}m',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ] else ...[
-              Text(
-                'Location not detected',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: _getCurrentLocation,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Refresh Location'),
-              ),
-            ],
-          ],
-        ),
+  BoxDecoration _boxBlue() => BoxDecoration(
+    color: Color(0xFF1E3A8A),
+    borderRadius: BorderRadius.circular(8),
+  );
+
+  BoxDecoration _boxWhite() => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(8),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        spreadRadius: 1,
+        blurRadius: 5,
+        offset: Offset(2, 2),
       ),
-    );
-  }
+    ],
+  );
 
-  Widget _buildLoadingCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: const Padding(
-        padding: EdgeInsets.all(40),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'present':
-        return Colors.green;
-      case 'late':
-        return Colors.orange;
-      case 'absent':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-}
-
-// Placeholder pages
-class AttendancePage extends StatelessWidget {
-  const AttendancePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Attendance History Page', style: TextStyle(fontSize: 24)),
-    );
-  }
-}
-
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Profile Page', style: TextStyle(fontSize: 24)),
-    );
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Pagi';
+    if (hour < 15) return 'Siang';
+    if (hour < 19) return 'Sore';
+    return 'Malam';
   }
 }

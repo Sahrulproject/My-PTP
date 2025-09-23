@@ -38,7 +38,26 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Image.asset(AppImage.background, height: 250, fit: BoxFit.cover),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              AppImage.background,
+              height: 250,
+              fit: BoxFit.cover,
+              color: const Color(0xFF2D3748),
+            ),
+            SizedBox(height: 20),
+            Text(
+              "© 2025 My PTP. All rights reserved.",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF2D3748),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

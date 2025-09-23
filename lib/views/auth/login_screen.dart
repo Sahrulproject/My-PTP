@@ -4,6 +4,7 @@ import 'package:myptp/extension/navigation.dart';
 import 'package:myptp/models/login_model.dart';
 import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/views/auth/register_screen.dart';
+import 'package:myptp/views/bottom_nav.dart';
 import 'package:myptp/views/forgot_password_screen.dart';
 import 'package:myptp/views/home_screen.dart';
 
@@ -368,7 +369,7 @@ class _LoginScreenState extends State<LoginScreen>
         // Navigasi ke dashboard
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const ButtomPage()),
         );
       } catch (e) {
         if (!mounted) return;

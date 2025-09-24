@@ -201,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Color(0xFF1E3A8A),
+        backgroundColor: Color(0xFF2D3748),
       ),
       body: RefreshIndicator(
         onRefresh: _fetchProfile,
@@ -238,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: Container(
                                 padding: EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue,
+                                  color: Colors.grey[800],
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(

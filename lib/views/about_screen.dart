@@ -12,7 +12,7 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(178, 97, 199, 247),
+      backgroundColor: Color(0xFF2D3748),
       appBar: AppBar(
         title: Text(
           "Tentang Aplikasi",
@@ -21,7 +21,7 @@ class _AboutScreenState extends State<AboutScreen> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Color(0xFF1E3A8A),
+        backgroundColor: Color(0xFF2D3748),
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
@@ -47,28 +47,32 @@ class _AboutScreenState extends State<AboutScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    backgroundImage: AssetImage(
-                      "assets/images/Kelas Hadir Logo.png",
-                    ),
+                    backgroundColor: Colors.white,
                     radius: 50,
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [
+                          Colors.black,
+                          Colors.grey,
+                        ], // Bisa gradient juga!
+                      ).createShader(bounds),
+                      child: Image.asset(
+                        "assets/images/newvector_bg.png",
+                        width: 100,
+                        height: 100,
+                        color: Colors.white, // Penting: image harus putih
+                      ),
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Kelas",
+                        "Versi 1.1.0",
                         style: TextStyle(
-                          fontFamily: "StageGrotesk_Medium",
-                          color: Color(0xFF1E3A8A),
-                          fontSize: 30,
-                        ),
-                      ),
-                      Text(
-                        "Hadir",
-                        style: TextStyle(
-                          fontFamily: "StageGrotesk_Medium",
-                          color: Color(0xFF10B981),
-                          fontSize: 30,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -88,17 +92,18 @@ class _AboutScreenState extends State<AboutScreen> {
                 child: Column(
                   children: [
                     Text(
-                      "Kelas Hadir adalah aplikasi absensi kehadiran yang memudahkan guru dan siswa mencatat serta memantau kehadiran secara real time. Dengan Kelas Hadir, proses pencatatan absensi menjadi lebih cepat dan akurat melalui fitur check-in digital, laporan kehadiran otomatis, dan notifikasi pengingat. Aplikasi Kelas Hadir dirancang sebagai solusi manajemen kehadiran yang efisien, memungkinkan institusi pendidikan mengelola data presensi secara terintegrasi dan aman. Tak perlu repot lagi absen manual! Kelas Hadir membantu mencatat kehadiran siswa dan guru hanya dengan satu sentuhan.",
+                      "My PTP adalah aplikasi absensi digital yang dirancang untuk mempermudah proses pencatatan kehadiran. Dengan tampilan yang sederhana dan fitur yang praktis, My PTP membantu pengguna mengelola aktivitas absensi secara lebih cepat, efisien, dan akurat",
                       style: TextStyle(
                         fontFamily: "StageGrotesk_Regular",
                         fontSize: 16,
                       ),
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.justify,
                     ),
                     SizedBox(height: 120),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        SizedBox(height: 150),
                         Text(
                           "© 2025 My PTP. All rights reserved.",
                           style: TextStyle(

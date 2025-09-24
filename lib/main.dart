@@ -6,7 +6,8 @@ import 'package:myptp/views/auth/login_screen.dart';
 import 'package:myptp/views/forgot_password_screen.dart';
 import 'package:myptp/views/home_screen.dart';
 import 'package:myptp/views/presence_screen.dart';
-import 'package:myptp/views/splash_screen.dart';
+import 'package:myptp/widgets/bottom_nav.dart';
+import 'package:myptp/widgets/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,10 +43,12 @@ class MyApp extends StatelessWidget {
       supportedLocales: [
         const Locale('id', 'ID'), // Indonesian
       ],
-      home: SplashScreen(),
+      // home: SplashScreen(),
       initialRoute: SplashScreen.id,
       routes: {
+        SplashScreen.id: (context) => SplashScreen(),
         LoginScreen.id: (context) => LoginScreen(),
+        ButtomPage.id: (context) => ButtomPage(),
         PresenceScreen.id: (context) => PresenceScreen(),
         ForgotPasswordScreen.id: (context) => ForgotPasswordScreen(),
         HomeScreen.id: (context) => HomeScreen(),

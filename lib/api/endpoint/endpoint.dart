@@ -9,14 +9,14 @@ class Endpoint {
   static const String checkIn = "$baseURL/absen/check-in";
   static const String checkOut = "$baseURL/absen/check-out";
   static const String izin = "$baseURL/izin";
-  static const String editProfilePhoto = "$baseURL/api/profile/photo";
+  static const String editProfilePhoto = "$baseURL/profile/photo";
   static const String absenToday = "$baseURL/absen/today";
   static const String absenStats = "$baseURL/absen/stats";
   static const String historyAbsen = "$baseURL/absen/history";
   static const String allUsers = "$baseURL/users";
   static const String training = "$baseURL/trainings";
   static const String batch = "$baseURL/batches";
-  static const String history = "$baseURL/api/absen/history";
-  static const String forgotPassword = "$baseURL/api/forgot-password";
-  static const String resetPassword = "$baseURL/api/reset-password";
+  static const String history = "$baseURL/absen/history";
+  static const String forgotPassword = "$baseURL/forgot-password";
+  static const String resetPassword = "$baseURL/reset-password";
 }

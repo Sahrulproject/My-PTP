@@ -87,19 +87,19 @@ class _PresenceScreenState extends State<PresenceScreen> {
   final Random _rand = Random();
   final List<Map<String, dynamic>> _questions = [
     {
-      'question': 'Apa Ibu Kota Indonesia?',
-      'options': ['Jakarta', 'Batavia', 'Bandung'],
-      'correct': 'Jakarta',
+      'question': 'Siapa Nama Presiden Indonesia Ke-5 ?',
+      'options': ['Megawati', 'Jokowi', 'Prabowo'],
+      'correct': 'Megawati',
     },
     {
-      'question': 'Gunung tertinggi di Indonesia?',
-      'options': ['Puncak Jaya', 'Semeru', 'Rinjani'],
-      'correct': 'Puncak Jaya',
+      'question': 'Sebutkan Berapa Jumlah Sila Pancasila ?',
+      'options': ['6', '5', '7'],
+      'correct': '5',
     },
     {
-      'question': 'Lambang negara Indonesia adalah?',
-      'options': ['Garuda Pancasila', 'Banteng', 'Merpati'],
-      'correct': 'Garuda Pancasila',
+      'question': 'Bendera Indonesia Bewarna ?',
+      'options': ['Putih Merah', 'Merah Putih', 'Merah Biru'],
+      'correct': 'Merah Putih',
     },
   ];
 
@@ -254,7 +254,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Color(0xFF1E3A8A),
+        backgroundColor: Color(0xFF2D3748),
         foregroundColor: Colors.white,
         centerTitle: true,
       ),

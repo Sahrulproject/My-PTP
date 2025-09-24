@@ -4,9 +4,8 @@ import 'package:myptp/extension/navigation.dart';
 import 'package:myptp/models/login_model.dart';
 import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/views/auth/register_screen.dart';
-import 'package:myptp/views/bottom_nav.dart';
 import 'package:myptp/views/forgot_password_screen.dart';
-import 'package:myptp/views/home_screen.dart';
+import 'package:myptp/widgets/bottom_nav.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

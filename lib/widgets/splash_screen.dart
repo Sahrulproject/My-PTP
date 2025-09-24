@@ -3,7 +3,7 @@ import 'package:myptp/extension/navigation.dart';
 import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/utils/app_image.dart';
 import 'package:myptp/views/auth/login_screen.dart';
-import 'package:myptp/views/bottom_nav.dart';
+import 'package:myptp/widgets/bottom_nav.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,7 +17,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    isLogin();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      isLogin();
+    });
   }
 
   void isLogin() async {
@@ -29,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (isLogin == true) {
         context.pushReplacementNamed(ButtomPage.id);
       } else {
-        context.push(LoginScreen());
+        context.pushNamed(LoginScreen.id);
       }
     });
   }
@@ -51,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Text(
               "© 2025 My PTP. All rights reserved.",
               style: TextStyle(
-                fontSize: 24,
+                height: 1.5,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF2D3748),
               ),

@@ -29,7 +29,7 @@ class _IzinScreenState extends State<IzinScreen> {
             ),
           ),
           centerTitle: true,
-          backgroundColor: Color(0xFF1E3A8A),
+          backgroundColor: Color(0xFF2D3748),
           bottom: TabBar(
             labelStyle: TextStyle(
               fontSize: 16,
@@ -77,7 +77,7 @@ class _LeaveRequestFormState extends State<LeaveRequestForm> {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
-              primary: Color(0xFF1E3A8A),
+              primary: Color(0xFF2D3748),
               onPrimary: Colors.white,
             ),
             dialogTheme: DialogThemeData(backgroundColor: Colors.white),
@@ -174,7 +174,7 @@ class _LeaveRequestFormState extends State<LeaveRequestForm> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
-                borderSide: BorderSide(color: Color(0xFF1E3A8A)),
+                borderSide: BorderSide(color: Color(0xFF2D3748)),
               ),
               suffixIcon: Icon(Icons.calendar_today, color: Colors.grey[600]),
               contentPadding: EdgeInsets.symmetric(
@@ -209,7 +209,7 @@ class _LeaveRequestFormState extends State<LeaveRequestForm> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
-                borderSide: BorderSide(color: Color(0xFF1E3A8A)),
+                borderSide: BorderSide(color: Color(0xFF2D3748)),
               ),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16,
@@ -226,7 +226,7 @@ class _LeaveRequestFormState extends State<LeaveRequestForm> {
             child: ElevatedButton(
               onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF1E3A8A),
+                backgroundColor: Color(0xFF2D3748),
                 padding: EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -359,7 +359,7 @@ class _LeaveHistoryListState extends State<LeaveHistoryList> {
                           style: TextStyle(
                             fontFamily: "StageGrotesk_Bold",
                             fontSize: 20,
-                            color: Color(0xFF1E3A8A),
+                            color: Color(0xFF2D3748),
                           ),
                         ),
                         Text(

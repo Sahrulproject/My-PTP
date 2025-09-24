@@ -133,11 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: 38,
+                  radius: 32,
                   backgroundImage: profile.profilePhotoUrl != null
                       ? NetworkImage(profile.profilePhotoUrl!)
-                      : AssetImage("assets/images/foto ppkd.jpeg")
-                            as ImageProvider,
+                      : AssetImage("") as ImageProvider,
                 ),
                 Expanded(
                   child: Column(
@@ -472,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   BoxDecoration _boxBlue() => BoxDecoration(
-    color: Color(0xFF1E3A8A),
+    color: Color(0xFF2D3748),
     borderRadius: BorderRadius.circular(8),
   );
 

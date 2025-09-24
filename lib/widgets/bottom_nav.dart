@@ -45,11 +45,12 @@ class _ButtomPageState extends State<ButtomPage> {
             // context.pushNamed(PresenceScreen.id);
           },
           child: Image.asset(
-            "assets/images/Attendance.png",
+            "assets/images/absensi.png",
             width: 30,
             height: 30,
+            color: Colors.white,
           ),
-          backgroundColor: Color(0xFF1E3A8A),
+          backgroundColor: Color(0xFF2D3748),
         ),
       ),
       bottomNavigationBar: BottomAppBar(

@@ -51,7 +51,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Color(0xFF1E3A8A),
+        backgroundColor: Color(0xFF2D3748),
       ),
       body: FutureBuilder<HistoryModel>(
         future: _futureHistory,

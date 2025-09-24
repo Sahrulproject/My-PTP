@@ -57,7 +57,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Gagal reset password: $e')));
+        ).showSnackBar(SnackBar(content: Text('Password reset failed: $e')));
       } finally {
         setState(() {
           isLoading = false;
@@ -83,7 +83,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             children: [
               const SizedBox(height: 20),
               Text(
-                "Reset password untuk: ${widget.email}",
+                "Reset password for: ${widget.email}",
                 style: const TextStyle(
                   fontSize: 16,
                   fontFamily: "StageGrotesk_Regular",
@@ -126,7 +126,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 20),
 
               const Text(
-                "Kode OTP",
+                "Code OTP",
                 style: TextStyle(fontSize: 16, fontFamily: "StageGrotesk_Bold"),
               ),
               const SizedBox(height: 10),
@@ -135,10 +135,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Kode OTP tidak boleh kosong';
+                    return 'OTP code cannot be empty';
                   }
                   if (value.length < 4) {
-                    return 'Kode OTP minimal 4 digit';
+                    return 'OTP code minimum 4 digits';
                   }
                   return null;
                 },
@@ -147,14 +147,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  hintText: "Masukkan kode OTP",
+                  hintText: "enter the OTP code",
                 ),
               ),
 
               const SizedBox(height: 20),
 
               const Text(
-                "Password Baru",
+                "New Password",
                 style: TextStyle(fontSize: 16, fontFamily: "StageGrotesk_Bold"),
               ),
               const SizedBox(height: 10),
@@ -163,10 +163,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 obscureText: !isNewPasswordVisible,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Password baru tidak boleh kosong';
+                    return 'New password cannot be empty';
                   }
                   if (value.length < 6) {
-                    return 'Password minimal 6 karakter';
+                    return 'Password minimum 6 characters';
                   }
                   return null;
                 },
@@ -175,7 +175,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  hintText: "Masukkan password baru",
+                  hintText: "Enter a New Password",
                   suffixIcon: IconButton(
                     onPressed: () {
                       setState(() {
@@ -194,7 +194,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 20),
 
               const Text(
-                "Konfirmasi Password Baru",
+                "Confirm New Password",
                 style: TextStyle(fontSize: 16, fontFamily: "StageGrotesk_Bold"),
               ),
               const SizedBox(height: 10),
@@ -203,10 +203,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 obscureText: !isConfirmPasswordVisible,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Konfirmasi password tidak boleh kosong';
+                    return 'Confirmation password cannot be empty';
                   }
                   if (value != newPasswordController.text) {
-                    return 'Password tidak cocok';
+                    return 'Passwords do not match';
                   }
                   return null;
                 },
@@ -215,7 +215,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  hintText: "Konfirmasi password baru",
+                  hintText: "Confirmation New Password",
                   suffixIcon: IconButton(
                     onPressed: () {
                       setState(() {
@@ -264,7 +264,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   Navigator.pop(context);
                 },
                 child: const Text(
-                  "Kembali",
+                  "Back to OTP Verification",
                   style: TextStyle(
                     fontFamily: "StageGrotesk_Regular",
                     color: Color(0xFF1E3A8A),

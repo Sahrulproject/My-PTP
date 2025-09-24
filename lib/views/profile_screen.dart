@@ -2,9 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lottie/lottie.dart';
 import 'package:myptp/api/profile_api.dart';
 import 'package:myptp/extension/navigation.dart';
 import 'package:myptp/models/get_profile_model.dart';
+import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/views/about_screen.dart';
 import 'package:myptp/views/auth/login_screen.dart';
 
@@ -87,6 +89,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _updating = false;
         _selectedImage = null;
       });
+    }
+  }
+
+  Future<void> _showLogoutConfirmationDialog() async {
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            "Konfirmasi Logout",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E3A8A),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset('assets/animations/warning.json', height: 150),
+              const SizedBox(height: 16),
+              const Text(
+                "Apakah Anda yakin ingin keluar dari akun ini?",
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Batal"),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text("Ya, Logout"),
+              onPressed: () {
+                Navigator.of(context).pop(true); // Mengembalikan true
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      await PreferenceHandler.removeToken();
+      await PreferenceHandler.removeLogin();
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (Route<dynamic> route) => false, // Hapus semua rute sebelumnya
+        );
+      }
     }
   }
 
@@ -300,21 +370,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 16),
-              Container(
-                color: Colors.white,
-                child: _buildMenuItem(
-                  icon: Icons.logout,
-                  title: "Logout",
-                  color: Colors.red,
-                  onTap: _updating
-                      ? null
-                      : () {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            LoginScreen.id,
-                          );
-                        },
+              const SizedBox(height: 30),
+              SizedBox(
+                // width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.redAccent, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 20,
+                    ),
+                    foregroundColor: Colors.redAccent,
+                  ),
+                  onPressed: () {
+                    _showLogoutConfirmationDialog();
+                  },
+                  icon: const Icon(Icons.logout, color: Colors.redAccent),
+                  label: const Text(
+                    "Logout",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],

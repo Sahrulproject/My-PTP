@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:myptp/api/register_api.dart';
 import 'package:myptp/extension/navigation.dart';
 import 'package:myptp/models/list_batches_model.dart';
@@ -7,8 +9,15 @@ import 'package:myptp/models/list_training_model.dart';
 import 'package:myptp/models/register_model.dart';
 import 'package:myptp/preference/shared_preference.dart';
 import 'package:myptp/views/auth/login_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+
+// Definisi warna dan tema terpusat
+// Sebaiknya dipindah ke file terpisah agar lebih rapi, misal: app_theme.dart
+class AppColors {
+  static const Color primary = Color(0xFF2D3748);
+  static const Color background = Color(0xFFF9FAFC);
+  static const Color textDark = Color(0xFF2D3748);
+  static const Color textLight = Colors.white;
+}
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -112,14 +121,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message ?? "Register berhasil")),
+        SnackBar(content: Text(result.message ?? "Register Success")),
       );
       context.pushNamed(LoginScreen.id);
     } catch (e) {
       setState(() => errorMessage = e.toString());
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Gagal daftar: $errorMessage")));
+      ).showSnackBar(SnackBar(content: Text("Register Failed: $errorMessage")));
     } finally {
       setState(() => isLoading = false);
     }
@@ -127,258 +136,317 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        title: Text(
-          "Registrasi",
-          style: TextStyle(fontFamily: "StageGrotesk_Bold", fontSize: 20),
+    // Definisi tema lokal (bisa dipindah ke MaterialApp di main.dart)
+    final theme = ThemeData(
+      scaffoldBackgroundColor: AppColors.background,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        titleTextStyle: TextStyle(
+          fontFamily: "StageGrotesk_Bold",
+          fontSize: 20,
+          color: AppColors.textDark,
         ),
-        centerTitle: true,
       ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              pickedFile != null
-                  ? CircleAvatar(
-                      radius: 50,
-                      backgroundImage: FileImage(File(pickedFile!.path)),
-                    )
-                  : CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey[200],
-                      child: const Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    ),
-              SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: pickFoto,
-                icon: Icon(Icons.camera_alt, color: Color(0xFF2D3748)),
-                label: Text(
-                  "Pilih Foto Profil",
-                  style: TextStyle(
-                    color: Color(0xFF2D3748),
-                    fontFamily: "StageGrotesk_Medium",
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              SizedBox(height: 32),
-              Padding(
-                padding: const EdgeInsets.only(right: 310),
-                child: Text(
-                  "Nama",
-                  style: TextStyle(
-                    fontFamily: "StageGrotesk_Medium",
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: nameController,
-                decoration: _inputDecoration("Masukkan Nama"),
-              ),
-              SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(right: 310),
-                child: Text(
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 20,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        hintStyle: const TextStyle(
+          fontFamily: "StageGrotesk_Regular",
+          color: Colors.grey,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          minimumSize: const Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: "StageGrotesk_Bold",
+            fontSize: 16,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: const TextStyle(
+            fontFamily: "StageGrotesk_Bold",
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+
+    return Theme(
+      data: theme,
+      child: Scaffold(
+        appBar: AppBar(title: const Text("Registration"), centerTitle: true),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildProfilePhotoSection(),
+                const SizedBox(height: 32),
+                _buildTextField("Name", nameController, "Input your full name"),
+                const SizedBox(height: 16),
+                _buildTextField(
                   "Email",
-                  style: TextStyle(
-                    fontFamily: "StageGrotesk_Medium",
-                    fontSize: 16,
-                  ),
+                  emailController,
+                  "Input your email address",
                 ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: emailController,
-                decoration: _inputDecoration("Masukkan Email"),
-              ),
-              SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(right: 280),
-                child: Text(
-                  "Password",
-                  style: TextStyle(
-                    fontFamily: "StageGrotesk_Medium",
-                    fontSize: 16,
-                  ),
+                const SizedBox(height: 16),
+                _buildPasswordField(),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  "Gender",
+                  genderList
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  selectedGender,
+                  (val) => setState(() => selectedGender = val),
                 ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: passController,
-                obscureText: hidePassword,
-                decoration: _inputDecoration("Masukkan Password").copyWith(
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      hidePassword ? Icons.visibility_off : Icons.visibility,
-                      color: Colors.grey,
-                    ),
-                    onPressed: () =>
-                        setState(() => hidePassword = !hidePassword),
-                  ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  "Select Batch",
+                  batchList
+                      .map(
+                        (b) => DropdownMenuItem(
+                          value: b,
+                          child: Text(b.batchKe ?? "Batch ${b.id}"),
+                        ),
+                      )
+                      .toList(),
+                  selectedBatch,
+                  (val) => setState(() => selectedBatch = val),
                 ),
-              ),
-              SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(right: 250),
-                child: Text(
-                  "Jenis Kelamin",
-                  style: TextStyle(
-                    fontFamily: "StageGrotesk_Medium",
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                value: selectedGender,
-                items: genderList
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                    .toList(),
-                onChanged: (val) => setState(() => selectedGender = val),
-                decoration: _inputDecoration("Pilih Jenis Kelamin"),
-              ),
-              SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(right: 275),
-                child: Text(
-                  "Pilih Batch",
-                  style: TextStyle(
-                    fontFamily: "StageGrotesk_Medium",
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              DropdownButtonFormField<Batches>(
-                value: selectedBatch,
-                items: batchList
-                    .map(
-                      (b) => DropdownMenuItem(
-                        value: b,
-                        child: Text(b.batchKe ?? "Batch ${b.id}"),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (val) => setState(() => selectedBatch = val),
-                decoration: _inputDecoration("Pilih Batch"),
-              ),
-              SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(right: 250),
-                child: Text(
-                  "Pilih Pelatihan",
-                  style: TextStyle(
-                    fontFamily: "StageGrotesk_Medium",
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              DropdownButtonFormField<Datum>(
-                value: selectedTraining,
-                items: trainingList
-                    .map(
-                      (t) => DropdownMenuItem(
-                        value: t,
-                        child: SizedBox(
-                          width: 220,
-                          child: Text(
-                            t.title ?? "Pelatihan ${t.id}",
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  "Select Training",
+                  trainingList
+                      .map(
+                        (t) => DropdownMenuItem(
+                          value: t,
+                          child: SizedBox(
+                            width: 220,
+                            child: Text(
+                              t.title ?? "Training ${t.id}",
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (val) => setState(() => selectedTraining = val),
-                decoration: _inputDecoration("Pilih Pelatihan"),
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: isLoading ? null : registerUser,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2D3748),
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: isLoading
-                    ? CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
                       )
-                    : Text(
-                        "Buat Akun",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontFamily: "StageGrotesk_Bold",
-                        ),
-                      ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                "Sudah punya akun?",
-                style: TextStyle(fontFamily: "StageGrotesk_Regular"),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  context.pushNamed(LoginScreen.id);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2D3748),
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      .toList(),
+                  selectedTraining,
+                  (val) => setState(() => selectedTraining = val),
                 ),
-                child: isLoading
-                    ? CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      )
-                    : Text(
-                        "Masuk",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontFamily: "StageGrotesk_Bold",
-                        ),
-                      ),
-              ),
-            ],
+                const SizedBox(height: 32),
+                _buildActionButton(),
+                const SizedBox(height: 16),
+                _buildLoginSection(),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      hintText: hint,
-      hintStyle: TextStyle(fontFamily: "StageGrotesk_Regular", fontSize: 16),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderSide: BorderSide(width: 2),
-        borderRadius: BorderRadius.circular(10),
+  Widget _buildProfilePhotoSection() {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.grey[200],
+              backgroundImage: pickedFile != null
+                  ? FileImage(File(pickedFile!.path)) as ImageProvider
+                  : null,
+              child: pickedFile == null
+                  ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                  : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: CircleAvatar(
+                backgroundColor: AppColors.primary,
+                radius: 18,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  onPressed: pickFoto,
+                  tooltip: "Select Profile Photo",
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    String hint,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: "StageGrotesk_Medium",
+            fontSize: 16,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: hint),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Password",
+          style: TextStyle(
+            fontFamily: "StageGrotesk_Medium",
+            fontSize: 16,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: passController,
+          obscureText: hidePassword,
+          decoration: InputDecoration(
+            hintText: "Input your password",
+            suffixIcon: IconButton(
+              icon: Icon(
+                hidePassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: () => setState(() => hidePassword = !hidePassword),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown<T>(
+    String label,
+    List<DropdownMenuItem<T>> items,
+    T? value,
+    Function(T?) onChanged,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: "StageGrotesk_Medium",
+            fontSize: 16,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          decoration: InputDecoration(hintText: "Select $label"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton() {
+    return ElevatedButton(
+      onPressed: isLoading ? null : registerUser,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+      child: isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: Colors.white,
+              ),
+            )
+          : const Text(
+              "Sign Up",
+              style: TextStyle(
+                fontFamily: "StageGrotesk_Bold",
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+    );
+  }
+
+  Widget _buildLoginSection() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          "Already have an account?",
+          style: TextStyle(
+            fontFamily: "StageGrotesk_Regular",
+            color: AppColors.textDark,
+          ),
+        ),
+        TextButton(
+          onPressed: () => context.pushNamed(LoginScreen.id),
+          child: const Text(
+            "Sign In",
+            style: TextStyle(
+              fontFamily: "StageGrotesk_Bold",
+              color: Colors.blue,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

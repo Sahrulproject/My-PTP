@@ -33,7 +33,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         setState(() {
           successMessage =
-              response?.message ?? "OTP berhasil dikirim ke email Anda";
+              response?.message ??
+              "OTP has been successfully sent to your email.";
         });
 
         // Navigate to reset password screen after 2 seconds
@@ -52,7 +53,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Gagal mengirim OTP: $e')));
+        ).showSnackBar(SnackBar(content: Text('Failed to send OTP: $e')));
       } finally {
         setState(() {
           isLoading = false;
@@ -65,7 +66,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Lupa Password"),
+        title: const Text("Forgot Password"),
         backgroundColor: const Color(0xFF2D3748),
         foregroundColor: Colors.white,
       ),
@@ -78,7 +79,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               const SizedBox(height: 20),
               const Text(
-                "Masukkan email Anda untuk menerima kode OTP",
+                "Enter your email to receive the OTP code",
                 style: TextStyle(
                   fontSize: 16,
                   fontFamily: "StageGrotesk_Regular",
@@ -130,10 +131,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Email tidak boleh kosong';
+                    return 'Email cannot be empty';
                   }
                   if (!value.contains('@')) {
-                    return 'Format email tidak valid';
+                    return 'Format email invalid';
                   }
                   return null;
                 },
@@ -142,7 +143,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  hintText: "Email Anda",
+                  hintText: "Your Email",
                 ),
               ),
               const SizedBox(height: 30),
@@ -161,7 +162,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          "Kirim OTP",
+                          "Send OTP",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -178,7 +179,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   Navigator.pop(context);
                 },
                 child: const Text(
-                  "Kembali ke Login",
+                  "Back to Login",
                   style: TextStyle(
                     fontFamily: "StageGrotesk_Regular",
                     color: Color(0xFF2D3748),

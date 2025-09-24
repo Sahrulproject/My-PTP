@@ -20,7 +20,7 @@ class ResetPasswordAPI {
       if (response.statusCode == 200) {
         return ResetPasswordModel.fromJson(jsonDecode(response.body));
       } else {
-        throw Exception("Gagal reset password: ${response.body}");
+        throw Exception("Password reset failed: ${response.body}");
       }
     } catch (e) {
       rethrow;
